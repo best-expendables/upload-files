@@ -1,15 +1,17 @@
 package file
 
 import (
+	"context"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/pkg/errors"
 	"io"
 )
 
-type FileManager interface {
-	Upload(path string, body io.Reader) error
+type Manager interface {
+	UploadFiles(ctx context.Context, files []File) error
 }
 
 type s3Manager struct {
@@ -18,13 +20,13 @@ type s3Manager struct {
 }
 
 type S3Config struct {
-	Region       string
-	Bucket       string
-	AwsAccessKey string
-	AwsSecret    string
+	Region       string `envconfig:"REGION" required:"true"`
+	Bucket       string `envconfig:"BUCKET" required:"true"`
+	AwsAccessKey string `envconfig:"ACCESS_KEY" required:"true"`
+	AwsSecret    string `envconfig:"SECRET" required:"true"`
 }
 
-func NewS3Manager(conf S3Config) (FileManager, error) {
+func NewS3Manager(conf S3Config) (Manager, error) {
 	creds := credentials.NewStaticCredentials(conf.AwsAccessKey, conf.AwsSecret, "")
 	_, err := creds.Get()
 	if err != nil {
@@ -34,19 +36,26 @@ func NewS3Manager(conf S3Config) (FileManager, error) {
 	return s3Manager{Bucket: conf.Bucket, Cfg: cfg}, nil
 }
 
-func (u s3Manager) Upload(path string, body io.Reader) error {
+type File struct {
+	Path string
+	Body io.Reader
+}
+
+func (u s3Manager) UploadFiles(ctx context.Context, files []File) error {
 	sess, err := session.NewSession(u.Cfg)
 	if err != nil {
 		return err
 	}
 	uploader := s3manager.NewUploader(sess)
-	_, err = uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(u.Bucket),
-		Body:   body,
-		Key:    aws.String(path),
-	})
-	if err != nil {
-		return err
+	for i := range files {
+		_, err = uploader.UploadWithContext(ctx, &s3manager.UploadInput{
+			Bucket: aws.String(u.Bucket),
+			Body:   files[i].Body,
+			Key:    aws.String(files[i].Path),
+		})
+		if err != nil {
+			return errors.Wrap(err, "Cannot upload file: "+files[i].Path)
+		}
 	}
 	return nil
 }

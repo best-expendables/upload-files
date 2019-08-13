@@ -1,6 +1,7 @@
 package file_test
 
 import (
+	"context"
 	"os"
 	upload_files "snapmartinc/upload-files"
 	"testing"
@@ -22,7 +23,7 @@ func TestS3Uploader_Upload(t *testing.T) {
 	if err != nil {
 		t.Errorf("error not nil: %v", err)
 	}
-	err = uploader.Upload("new/test/file", f)
+	err = uploader.UploadFiles(context.Background(), []upload_files.File{{"new/test/file", f}})
 	if err != nil {
 		t.Errorf("error not nil: %v", err)
 	}
