@@ -1,4 +1,4 @@
-module snapmartinc/upload-files
+module bitbucket.org/snapmartinc/upload-files
 
 go 1.12
 
