@@ -2,16 +2,20 @@ package file
 
 import (
 	"context"
+	"fmt"
+	"io"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/pkg/errors"
-	"io"
 )
 
 type Manager interface {
 	UploadFiles(ctx context.Context, files []File) error
+	DownloadFile(ctx context.Context, destination io.WriterAt, path, name string) error
 }
 
 type s3Manager struct {
@@ -38,6 +42,7 @@ func NewS3Manager(conf S3Config) (Manager, error) {
 
 type File struct {
 	Path string
+	Name string
 	Body io.Reader
 }
 
@@ -51,11 +56,31 @@ func (u s3Manager) UploadFiles(ctx context.Context, files []File) error {
 		_, err = uploader.UploadWithContext(ctx, &s3manager.UploadInput{
 			Bucket: aws.String(u.Bucket),
 			Body:   files[i].Body,
-			Key:    aws.String(files[i].Path),
+			Key:    aws.String(getLocation(files[i].Path, files[i].Name)),
 		})
 		if err != nil {
 			return errors.Wrap(err, "Cannot upload file: "+files[i].Path)
 		}
 	}
 	return nil
+}
+
+func (u s3Manager) DownloadFile(ctx context.Context, destination io.WriterAt, path, name string) error {
+	sess, err := session.NewSession(u.Cfg)
+	if err != nil {
+		return err
+	}
+	uploader := s3manager.NewDownloader(sess)
+	_, err = uploader.Download(destination, &s3.GetObjectInput{
+		Bucket: aws.String(u.Bucket),
+		Key:    aws.String(getLocation(path, name)),
+	})
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("Cannot download file: %s", getLocation(path, name)))
+	}
+	return nil
+}
+
+func getLocation(path, name string) string {
+	return fmt.Sprintf("%s/%s", path, name)
 }
