@@ -17,7 +17,7 @@ func TestS3Uploader_Upload(t *testing.T) {
 	t.SkipNow()
 	conf := upload_files.S3Config{
 		Region:       "ap-southeast-1",
-		Bucket:       "quangphan-test",
+		Bucket:       "snapmart-staging",
 		AwsAccessKey: "AKIATPQMCETQLYEWVGHF",
 		AwsSecret:    "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",
 	}
@@ -25,15 +25,22 @@ func TestS3Uploader_Upload(t *testing.T) {
 	if err != nil {
 		t.Errorf("error not nil: %v", err)
 	}
-	f, err := os.Open("uploader.go")
+	f, err := os.Open("temp.txt")
 	if err != nil {
 		t.Errorf("error not nil: %v", err)
 	}
-	err = uploader.UploadFiles(context.Background(), []upload_files.File{{"new/test/file", "text.txt", f}})
+
+	err = uploader.UploadFiles(context.Background(), []upload_files.File{{
+		Path: "new/test/file",
+		Name: "text.txt",
+		Body: f,
+		ACL:  upload_files.AccessControlPublicRead,
+	}})
 	if err != nil {
 		t.Errorf("error not nil: %v", err)
 	}
 }
+
 func TestS3Downloader(t *testing.T) {
 	t.SkipNow()
 	conf := upload_files.S3Config{
@@ -51,7 +58,12 @@ func TestS3Downloader(t *testing.T) {
 	if err != nil {
 		t.Errorf("error not nil: %v", err)
 	}
-	err = uploader.UploadFiles(context.Background(), []upload_files.File{{"new/test/file", fileName, f}})
+	err = uploader.UploadFiles(context.Background(), []upload_files.File{{
+		Path: "new/test/file",
+		Name: fileName,
+		Body: f,
+		ACL:  upload_files.AccessControlPublicRead,
+	}})
 	if err != nil {
 		t.Errorf("error not nil: %v", err)
 	}
