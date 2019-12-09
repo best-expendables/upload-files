@@ -6,7 +6,7 @@ type AccessControlList string
 
 const (
 	AccessControlPrivate         AccessControlList = "private"
-	AccessControlPublicRead      AccessControlList = "public"
+	AccessControlPublicRead      AccessControlList = "public-read"
 	AccessControlPublicReadWrite AccessControlList = "public-read-write"
 )
 
