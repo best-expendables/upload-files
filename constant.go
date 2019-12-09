@@ -3,11 +3,13 @@ package file
 import "github.com/aws/aws-sdk-go/service/s3"
 
 type AccessControlList string
+type ContentType string
 
 const (
 	AccessControlPrivate         AccessControlList = "private"
 	AccessControlPublicRead      AccessControlList = "public-read"
 	AccessControlPublicReadWrite AccessControlList = "public-read-write"
+	ContentTypeJpeg              ContentType       = "image/jpeg"
 )
 
 func (a AccessControlList) toAWSACL() *string {
@@ -21,4 +23,8 @@ func (a AccessControlList) toAWSACL() *string {
 	default:
 		return nil
 	}
+}
+
+func (c ContentType) toS3ContentType() *string {
+	return strToPtr(string(c))
 }

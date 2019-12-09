@@ -41,10 +41,11 @@ func NewS3Manager(conf S3Config) (Manager, error) {
 }
 
 type File struct {
-	Path string
-	Name string
-	Body io.Reader
-	ACL  AccessControlList
+	Path        string
+	Name        string
+	Body        io.Reader
+	ACL         AccessControlList
+	ContentType ContentType
 }
 
 func (u s3Manager) UploadFiles(ctx context.Context, files []File) error {
@@ -55,10 +56,11 @@ func (u s3Manager) UploadFiles(ctx context.Context, files []File) error {
 	uploader := s3manager.NewUploader(sess)
 	for i := range files {
 		_, err = uploader.UploadWithContext(ctx, &s3manager.UploadInput{
-			ACL:    files[i].ACL.toAWSACL(),
-			Bucket: aws.String(u.Bucket),
-			Body:   files[i].Body,
-			Key:    aws.String(getLocation(files[i].Path, files[i].Name)),
+			ACL:         files[i].ACL.toAWSACL(),
+			Bucket:      aws.String(u.Bucket),
+			Body:        files[i].Body,
+			Key:         aws.String(getLocation(files[i].Path, files[i].Name)),
+			ContentType: files[i].ContentType.toS3ContentType(),
 		})
 		if err != nil {
 			return errors.Wrap(err, "Cannot upload file: "+files[i].Path)
