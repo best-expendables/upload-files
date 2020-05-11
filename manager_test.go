@@ -10,7 +10,7 @@ import (
 	"os"
 	"testing"
 
-	upload_files "bitbucket.org/snapmartinc/upload-files"
+	upload_files "github.com/best-expendables/upload-files"
 )
 
 func TestS3Uploader_Upload(t *testing.T) {

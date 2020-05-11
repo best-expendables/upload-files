@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"bitbucket.org/snapmartinc/logger"
+	"github.com/best-expendables/logger"
 )
 
 type CSVProcessor interface {
